@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
 import { Sidebar } from './components/Sidebar';
@@ -14,54 +14,35 @@ import { SettingsPage } from './components/pages/SettingsPage';
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [onboardingStatus, setOnboardingStatus] = useState<
-    'loading' | 'not_started' | 'in_progress' | 'completed'
-  >('loading');
-
-  // Fetch onboarding status from Supabase
   useEffect(() => {
-    const fetchOnboardingStatus = async () => {
+    const loadOnboardingStatus = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
-        setOnboardingStatus('not_started');
+        setLoading(false);
         return;
       }
 
       const { data, error } = await supabase
         .from('onboarding_progress')
         .select('onboarding_status')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
-      if (error || !data) {
-        setOnboardingStatus('not_started');
-        return;
+      if (!error && data) {
+        setOnboardingComplete(data.onboarding_status === 'complete');
       }
 
-      setOnboardingStatus(data.onboarding_status);
+      setLoading(false);
     };
 
-    fetchOnboardingStatus();
+    loadOnboardingStatus();
   }, []);
-
-  const onboardingComplete = onboardingStatus === 'completed';
-
-  // Force onboarding until complete
-  useEffect(() => {
-    if (onboardingStatus === 'loading') return;
-
-    if (!onboardingComplete && currentPage !== 'onboarding') {
-      setCurrentPage('onboarding');
-    }
-
-    if (onboardingComplete && currentPage === 'onboarding') {
-      setCurrentPage('dashboard');
-    }
-  }, [onboardingStatus, onboardingComplete, currentPage]);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -86,11 +67,10 @@ export default function App() {
     }
   };
 
-  // Optional: loading guard to prevent flicker
-  if (onboardingStatus === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0C0F14] flex items-center justify-center text-white">
-        Loading...
+        Loading…
       </div>
     );
   }
@@ -106,9 +86,7 @@ export default function App() {
       />
 
       <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        <div className="max-w-7xl mx-auto p-8">
-          {renderPage()}
-        </div>
+        <div className="max-w-7xl mx-auto p-8">{renderPage()}</div>
       </div>
     </div>
   );
