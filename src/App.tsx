@@ -35,7 +35,7 @@ export default function App() {
         .single();
 
       if (!error && data) {
-        setOnboardingComplete(data.onboarding_status === 'complete');
+        setOnboardingComplete(data.onboarding_status === 'completed');
       }
 
       setLoading(false);
@@ -45,6 +45,11 @@ export default function App() {
   }, []);
 
   const renderPage = () => {
+    // 🔒 HARD GATE: force onboarding
+    if (!onboardingComplete && currentPage !== 'onboarding') {
+      return <OnboardingPage />;
+    }
+
     switch (currentPage) {
       case 'dashboard':
         return <DashboardPage onNavigate={setCurrentPage} />;
@@ -86,7 +91,9 @@ export default function App() {
       />
 
       <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        <div className="max-w-7xl mx-auto p-8">{renderPage()}</div>
+        <div className="max-w-7xl mx-auto p-8">
+          {renderPage()}
+        </div>
       </div>
     </div>
   );
