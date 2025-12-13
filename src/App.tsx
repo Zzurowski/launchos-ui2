@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Intercom from '@intercom/messenger-js-sdk';
 import { supabase } from './supabase';
 
 import { Sidebar } from './components/Sidebar';
@@ -17,6 +18,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
+  // ─────────────────────────────────────────────
+  // INIT AUTH + PROFILE
+  // ─────────────────────────────────────────────
   useEffect(() => {
     const initUser = async () => {
       const {
@@ -30,7 +34,6 @@ export default function App() {
 
       setUserId(user.id);
 
-      // Ensure profile exists
       const { data: profile } = await supabase
         .from('profiles')
         .select('id')
@@ -50,6 +53,25 @@ export default function App() {
     initUser();
   }, []);
 
+  // ─────────────────────────────────────────────
+  // INTERCOM INITIALIZATION
+  // ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+
+    Intercom({
+      app_id: 'nod3jhrj',
+      user_id: userId,
+    });
+
+    return () => {
+      Intercom('shutdown');
+    };
+  }, [userId]);
+
+  // ─────────────────────────────────────────────
+  // PAGE RENDERER
+  // ─────────────────────────────────────────────
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
@@ -73,6 +95,9 @@ export default function App() {
     }
   };
 
+  // ─────────────────────────────────────────────
+  // LOADING STATE
+  // ─────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0C0F14] flex items-center justify-center text-white">
@@ -81,6 +106,9 @@ export default function App() {
     );
   }
 
+  // ─────────────────────────────────────────────
+  // APP LAYOUT
+  // ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0C0F14]">
       <Sidebar
@@ -91,7 +119,11 @@ export default function App() {
         userId={userId}
       />
 
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div
+        className={`transition-all duration-300 ${
+          sidebarOpen ? 'ml-64' : 'ml-0'
+        }`}
+      >
         <div className="max-w-7xl mx-auto p-8">
           {renderPage()}
         </div>
