@@ -28,11 +28,13 @@ interface OnboardingStep {
   description: string;
   icon: any;
   status: StepStatus;
+  color: string;
 }
 
 export function OnboardingPage() {
   const [activeStep, setActiveStep] = useState<number | null>(null);
 
+  // 🔒 SINGLE SOURCE OF TRUTH — ALL STEPS START NOT_STARTED
   const [steps, setSteps] = useState<OnboardingStep[]>([
     {
       id: 1,
@@ -40,6 +42,7 @@ export function OnboardingPage() {
       description: 'Tell us about your business, location, and services',
       icon: Building2,
       status: 'not-started',
+      color: 'from-blue-500 to-cyan-500',
     },
     {
       id: 2,
@@ -47,6 +50,7 @@ export function OnboardingPage() {
       description: 'Upload your logo, colors, and brand assets',
       icon: Palette,
       status: 'not-started',
+      color: 'from-purple-500 to-pink-500',
     },
     {
       id: 3,
@@ -54,6 +58,7 @@ export function OnboardingPage() {
       description: 'Define your ideal customer and market',
       icon: Users,
       status: 'not-started',
+      color: 'from-green-500 to-emerald-500',
     },
     {
       id: 4,
@@ -61,6 +66,7 @@ export function OnboardingPage() {
       description: 'Set your messaging style and content tone',
       icon: FileText,
       status: 'not-started',
+      color: 'from-orange-500 to-pink-500',
     },
     {
       id: 5,
@@ -68,6 +74,7 @@ export function OnboardingPage() {
       description: 'Configure your advertising and analytics',
       icon: Megaphone,
       status: 'not-started',
+      color: 'from-cyan-500 to-blue-500',
     },
     {
       id: 6,
@@ -75,6 +82,7 @@ export function OnboardingPage() {
       description: 'Connect your Fieldd account for lead management',
       icon: Database,
       status: 'not-started',
+      color: 'from-violet-500 to-purple-500',
     },
   ]);
 
@@ -82,101 +90,122 @@ export function OnboardingPage() {
   const progressPercentage = (completedCount / steps.length) * 100;
   const allStepsCompleted = completedCount === steps.length;
 
-  const openStep = (id: number) => {
+  const handleStepClick = (stepId: number) => {
     setSteps(prev =>
-      prev.map(s =>
-        s.id === id && s.status === 'not-started'
-          ? { ...s, status: 'in-progress' }
-          : s
+      prev.map(step =>
+        step.id === stepId && step.status === 'not-started'
+          ? { ...step, status: 'in-progress' }
+          : step
       )
     );
-    setActiveStep(id);
+    setActiveStep(stepId);
+  };
+
+  const handleBack = () => {
+    setActiveStep(null);
   };
 
   const handleSave = () => {
     setSteps(prev =>
-      prev.map(s =>
-        s.id === activeStep ? { ...s, status: 'completed' } : s
+      prev.map(step =>
+        step.id === activeStep
+          ? { ...step, status: 'completed' }
+          : step
       )
     );
     setActiveStep(null);
   };
 
-  const handleBack = () => setActiveStep(null);
+  const handleReviewClick = () => {
+    setActiveStep(99);
+  };
 
-  const getBadge = (status: StepStatus) => {
-    if (status === 'completed')
+  const handleSubmit = () => {
+    alert('Onboarding submitted successfully!');
+    setActiveStep(null);
+  };
+
+  const getStatusBadge = (status: StepStatus) => {
+    if (status === 'completed') {
       return (
-        <span className="text-green-400 flex items-center gap-1">
-          <CheckCircle2 className="w-4 h-4" /> Completed
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-500/20 text-green-400">
+          <CheckCircle2 className="w-4 h-4 mr-1" />
+          Completed
         </span>
       );
+    }
 
-    if (status === 'in-progress')
+    if (status === 'in-progress') {
       return (
-        <span className="text-blue-400 flex items-center gap-1">
-          <Clock className="w-4 h-4" /> In Progress
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-500/20 text-blue-400">
+          <Clock className="w-4 h-4 mr-1" />
+          In Progress
         </span>
       );
+    }
 
     return (
-      <span className="text-gray-400 flex items-center gap-1">
-        <Circle className="w-4 h-4" /> Not Started
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-500/20 text-gray-400">
+        <Circle className="w-4 h-4 mr-1" />
+        Not Started
       </span>
     );
   };
 
-  // Active step views
+  // ---- FORM ROUTING ----
   if (activeStep === 1) return <BusinessInformationForm onBack={handleBack} onSave={handleSave} />;
   if (activeStep === 2) return <BrandGuidelinesForm onBack={handleBack} onSave={handleSave} />;
   if (activeStep === 3) return <TargetAudienceForm onBack={handleBack} onSave={handleSave} />;
   if (activeStep === 4) return <ContentPreferencesForm onBack={handleBack} onSave={handleSave} />;
   if (activeStep === 5) return <AdsTrackingForm onBack={handleBack} onSave={handleSave} />;
   if (activeStep === 6) return <CRMSetupForm onBack={handleBack} onSave={handleSave} />;
-  if (activeStep === 99) return <ReviewSubmitPage onBack={handleBack} onSubmit={() => alert('Submitted')} onEdit={setActiveStep} />;
+  if (activeStep === 99) {
+    return <ReviewSubmitPage onBack={handleBack} onSubmit={handleSubmit} />;
+  }
 
+  // ---- CHECKLIST VIEW ----
   return (
     <div>
       <PageHero
         title="Onboarding Checklist"
         subtitle="Complete these steps to launch your marketing package"
         icon={<CheckCircle2 className="w-8 h-8 text-white" />}
-        iconGradient="from-[#10B981] to-[#059669]"
+        iconGradient="from-emerald-500 to-green-600"
       />
 
-      <div className="mb-6">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-white">Overall Progress</span>
-          <span className="text-blue-400">
-            {completedCount} of {steps.length} completed
-          </span>
+      <div className="mt-6 mb-8">
+        <div className="flex justify-between text-sm text-blue-400 mb-2">
+          <span>Overall Progress</span>
+          <span>{completedCount} of {steps.length} completed</span>
         </div>
-        <div className="h-2 bg-gray-800 rounded">
+        <div className="h-2 bg-gray-800 rounded-full">
           <div
-            className="h-full bg-blue-500 rounded transition-all"
+            className="h-full bg-blue-500 rounded-full transition-all"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {steps.map(step => {
           const Icon = step.icon;
           return (
             <button
               key={step.id}
-              onClick={() => openStep(step.id)}
-              className="w-full p-5 rounded-xl border border-gray-700 bg-[#12161D] hover:border-blue-400 transition text-left"
+              onClick={() => handleStepClick(step.id)}
+              className="w-full text-left bg-[#141820] border border-[#222] rounded-xl p-6 hover:border-blue-500/40 transition"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Icon className="w-6 h-6 text-blue-400" />
-                  <div>
-                    <div className="text-white font-medium">{step.title}</div>
-                    <div className="text-sm text-gray-400">{step.description}</div>
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                  <Icon className="text-white w-6 h-6" />
                 </div>
-                {getBadge(step.status)}
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-white font-medium">{step.title}</h3>
+                    {getStatusBadge(step.status)}
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">{step.description}</p>
+                </div>
               </div>
             </button>
           );
@@ -185,8 +214,8 @@ export function OnboardingPage() {
 
       {allStepsCompleted && (
         <button
-          onClick={() => setActiveStep(99)}
-          className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl"
+          onClick={handleReviewClick}
+          className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-medium"
         >
           Review & Submit Onboarding
         </button>
