@@ -14,8 +14,8 @@ import { SettingsPage } from './components/pages/SettingsPage';
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const initUser = async () => {
@@ -27,6 +27,8 @@ export default function App() {
         setLoading(false);
         return;
       }
+
+      setUserId(user.id);
 
       // Ensure profile exists
       const { data: profile } = await supabase
@@ -42,17 +44,6 @@ export default function App() {
         });
       }
 
-      // Fetch onboarding status
-      const { data: onboarding } = await supabase
-        .from('onboarding_progress')
-        .select('onboarding_status')
-        .eq('id', user.id)
-        .single();
-
-      if (onboarding) {
-        setOnboardingComplete(onboarding.onboarding_status === 'complete');
-      }
-
       setLoading(false);
     };
 
@@ -60,10 +51,6 @@ export default function App() {
   }, []);
 
   const renderPage = () => {
-    if (!onboardingComplete && currentPage !== 'onboarding') {
-      return <OnboardingPage />;
-    }
-
     switch (currentPage) {
       case 'dashboard':
         return <DashboardPage onNavigate={setCurrentPage} />;
@@ -101,7 +88,7 @@ export default function App() {
         setIsOpen={setSidebarOpen}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
-        onboardingComplete={onboardingComplete}
+        userId={userId}
       />
 
       <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
