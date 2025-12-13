@@ -18,7 +18,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadOnboardingStatus = async () => {
+    const initUser = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -28,24 +28,38 @@ export default function App() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Ensure profile exists
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) {
+        await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email,
+        });
+      }
+
+      // Fetch onboarding status
+      const { data: onboarding } = await supabase
         .from('onboarding_progress')
         .select('onboarding_status')
         .eq('id', user.id)
         .single();
 
-      if (!error && data) {
-        setOnboardingComplete(data.onboarding_status === 'completed');
+      if (onboarding) {
+        setOnboardingComplete(onboarding.onboarding_status === 'complete');
       }
 
       setLoading(false);
     };
 
-    loadOnboardingStatus();
+    initUser();
   }, []);
 
   const renderPage = () => {
-    // 🔒 HARD GATE: force onboarding
     if (!onboardingComplete && currentPage !== 'onboarding') {
       return <OnboardingPage />;
     }
